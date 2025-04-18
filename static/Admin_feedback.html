@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suggestion System - Admin Feedback</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', fetchSuggestions);
+
+        async function fetchSuggestions() {
+            const response = await fetch('/get_pending_suggestions');
+            const suggestions = await response.json();
+
+            const suggestionList = document.getElementById('suggestionList');
+            suggestionList.innerHTML = '';
+
+            suggestions.forEach(suggestion => {
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.className = "p-4 mb-4 bg-white border rounded";
+
+                suggestionDiv.innerHTML = `
+                    <p><strong>Suggestion ID:</strong> ${suggestion.Suggestion_id}</p>
+                    <p><strong>Student ID:</strong> ${suggestion.Student_id}</p>
+                    <p><strong>Category:</strong> ${suggestion.Category_id}</p>
+                    <p><strong>Message:</strong> ${suggestion.Message}</p>
+                    <p><strong>Date Submitted:</strong> ${suggestion.Date_submitted}</p>
+                    
+                    <textarea id="response_${suggestion.Suggestion_id}" class="w-full p-2 mt-2 border rounded" placeholder="Enter your response here..."></textarea>
+                    
+                    <button onclick="submitFeedback(${suggestion.Suggestion_id})" 
+                        class="mt-2 bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">
+                        Mark as Being Addressed
+                    </button>
+                `;
+
+                suggestionList.appendChild(suggestionDiv);
+            });
+        }
+
+        async function submitFeedback(suggestionId) {
+            const responseText = document.getElementById(`response_${suggestionId}`).value;
+
+            if (!responseText) {
+                alert("Please enter your response before proceeding.");
+                return;
+            }
+
+            const response = await fetch('/submit_feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    suggestion_id: suggestionId,
+                    status: 'Being Addressed',
+                    response: responseText
+                })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+
+            if (response.ok) {
+                fetchSuggestions(); // Refresh list
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</head>
+<body class="bg-cover bg-center min-h-screen text-gray-800" style="background-image: url('feedback.jpg');">
+    <div class="bg-white bg-opacity-90 max-w-3xl mx-auto p-6 shadow-lg rounded-lg mt-10">
+        <!-- Header with back icon -->
+        <div class="flex items-center mb-6">
+            <button onclick="goBack()" class="mr-3 text-blue-600 hover:text-blue-800 text-2xl font-bold">
+                ←
+            </button>
+            <h2 class="text-2xl font-bold">Admin Feedback Interface</h2>
+        </div>
+
+        <div id="suggestionList"></div>
+    </div>
+</body>
+</html>

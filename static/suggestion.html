@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SUGGESTION BOX</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', fetchCategories);
+
+        async function fetchCategories() {
+            const categorySelect = document.getElementById('category_id');
+            const categories = ['Facility', 'Student', 'Professor', 'Other'];
+
+            categories.forEach((category, index) => {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+        }
+
+        async function submitSuggestion() {
+            const studentId = localStorage.getItem('student_id');
+            const categoryId = document.getElementById('category_id').value;
+            const subcategory = document.getElementById('subcategory').value;
+            const message = document.getElementById('message').value;
+
+            if (!studentId) {
+                alert("You need to be logged in to submit a suggestion.");
+                return;
+            }
+            if (!categoryId || !subcategory || !message) {
+                alert("Please fill out all fields.");
+                return;
+            }
+
+            const response = await fetch('/submit_suggestion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    student_id: studentId,
+                    category_id: categoryId,
+                    subcategory: subcategory,
+                    message: message 
+                })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+
+            if (response.ok) {
+                document.getElementById('subcategory').value = '';
+                document.getElementById('message').value = '';
+                document.getElementById('category_id').value = '';
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</head>
+<body class="bg-cover bg-center min-h-screen text-gray-800" style="background-image: url('EM.jpg');">
+    <h1 class="text-3xl font-bold text-center mb-2">SUGGESTION BOX</h1>
+
+    <!-- Centered Transparent Instruction Box -->
+    <div class="flex justify-center mb-6">
+        <div class="bg-white/60 border border-blue-300 text-center text-sm text-grey-900 px-4 py-2 rounded shadow max-w-xs">
+            Please select a <strong>specific category</strong> for your suggestion.<br>
+            In the <strong>Subcategory</strong>, enter a keyword like <em>Fix</em>, <em>Broken</em>, or <em>Replace</em>.
+        </div>
+    </div>
+
+
+    <div class="bg-white bg-opacity-90 max-w-md mx-auto p-6 shadow-lg rounded-lg mt-10">
+        <!-- Header with icon -->
+        <div class="flex items-center justify-center mb-6">
+            <button onclick="goBack()" class="mr-3 text-blue-600 hover:text-blue-800 text-xl font-bold">
+                ←
+            </button>
+            <h1 class="text-3xl font-bold">SUGGESTION BOX</h1>
+            
+        </div>
+
+        <label for="category_id" class="block mb-2 font-medium">Category</label>
+        <select id="category_id" class="w-full p-2 mb-4 border rounded">
+            <option value="" disabled selected>Select a category</option>
+        </select>
+
+        <label for="subcategory" class="block mb-2 font-medium">Subcategory</label>
+        <input type="text" id="subcategory" class="w-full p-2 mb-4 border rounded" placeholder="Enter a subcategory">
+
+        <label for="message" class="block mb-2 font-medium">Message</label>
+        <textarea id="message" rows="5" class="w-full p-2 mb-4 border rounded" placeholder="Enter your suggestion here..."></textarea>
+
+        <button onclick="submitSuggestion()" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Submit Suggestion</button>
+    </div>
+
+</body>
+</html>

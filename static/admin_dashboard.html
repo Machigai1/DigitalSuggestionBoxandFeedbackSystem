@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style1.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>DSFS</h2>
+    <ul>
+      <li><a href="#" title="Refresh" onclick="refreshDashboard(); return false;">
+        <i class="fa-solid fa-arrows-rotate"></i></i></a></li>
+      <li><a href="Admin_feedback.html" title="Feedback"><i class="fa-solid fa-comment-dots"></i></a></li>
+      <li><a href="archive.html" title="Archive"><i class="fa-solid fa-box-archive"></i></a></li>
+      <li><a href="index.html" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <h1>Admin Dashboard</h1>
+    </div>
+
+    <div class="status-cards">
+      <div class="card pending">
+        <h2>Needs Action</h2>
+        <p id="pendingCount">0</p>
+      </div>
+      <div class="card being-addressed">
+        <h2>Being Addressed</h2>
+        <p id="beingAddressedCount">0</p>
+      </div>
+    </div>
+
+    <div class="recent-suggestions">
+      <h2>Recent Pending Suggestions</h2>
+      <div class="suggestions-list" id="recentSuggestions">
+        <p>Loading suggestions...</p>
+      </div>
+    </div>
+
+    <div class="recent-suggestions">
+      <h2>Suggestions Being Addressed</h2>
+      <div class="suggestions-list" id="beingAddressedSuggestions">
+        <p>Loading suggestions...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchPendingSuggestions();
+      fetchBeingAddressedSuggestions();
+    });
+    async function fetchPendingSuggestions() {
+      try {
+        const response = await fetch('/get_pending_suggestions');
+        const suggestions = await response.json();
+
+        const list = document.getElementById('recentSuggestions');
+        const pendingCount = document.getElementById('pendingCount');
+
+        list.innerHTML = '';
+        pendingCount.textContent = suggestions.length;
+
+        if (suggestions.length === 0) {
+          list.innerHTML = '<p>No pending suggestions.</p>';
+          return;
+        }
+
+        suggestions.forEach(s => {
+          const div = document.createElement('div');
+          div.className = "p-4 mb-4 bg-white border rounded";
+          div.innerHTML = `
+            <p><strong>ID:</strong> ${s.Suggestion_id}</p>
+            <p><strong>Student ID:</strong> ${s.Student_id}</p>
+            <p><strong>Message:</strong> ${s.Message}</p>
+            <p><strong>Status:</strong> ${s.Status}</p>
+            <p><strong>Date:</strong> ${s.Date_submitted}</p>
+          `;
+          list.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+        document.getElementById('recentSuggestions').innerHTML = "<p>Error loading suggestions.</p>";
+      }
+    }
+
+    async function fetchBeingAddressedSuggestions() {
+      try {
+        const response = await fetch('/get_being_addressed_suggestions');
+        const suggestions = await response.json();
+
+        const list = document.getElementById('beingAddressedSuggestions');
+        const beingAddressedCount = document.getElementById('beingAddressedCount');
+
+        list.innerHTML = '';
+        beingAddressedCount.textContent = suggestions.length;
+
+        if (suggestions.length === 0) {
+          list.innerHTML = '<p>No suggestions currently being addressed.</p>';
+          return;
+        }
+
+        suggestions.forEach(s => {
+          const div = document.createElement('div');
+          div.className = "suggestion-card";
+
+          div.innerHTML = `
+            <div class="column info">
+              <p><strong>ID:</strong> ${s.Suggestion_id}</p>
+              <p><strong>Student ID:</strong> ${s.Student_id}</p>
+              <p><strong>Message:</strong> ${s.Message}</p>
+              <p><strong>Status:</strong> ${s.Status}</p>
+              <p><strong>Date:</strong> ${s.Date_submitted}</p>
+            </div>
+            <div class="column response">
+              <textarea id="response_${s.Suggestion_id}" class="response-box">${s.Response || ''}</textarea>
+              <button onclick="updateResponse(${s.Suggestion_id})" class="update-btn">Update Response</button>
+            </div>
+            <div class="column actions">
+              <button onclick="markResolved(${s.Suggestion_id})" class="resolve-btn">Mark as Resolved</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Error fetching being addressed suggestions:", error);
+        document.getElementById('beingAddressedSuggestions').innerHTML = "<p>Error loading suggestions.</p>";
+      }
+    }
+
+    async function updateResponse(suggestionId) {
+      const responseText = document.getElementById(`response_${suggestionId}`).value;
+      try {
+        const res = await fetch('/update_response', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suggestion_id: suggestionId, response: responseText })
+        });
+
+        const result = await res.json();
+        alert(result.message);
+      } catch (error) {
+        alert("Failed to update response.");
+        console.error(error);
+      }
+    }
+
+    async function markResolved(suggestionId) {
+      try {
+        const res = await fetch('/mark_resolved', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suggestion_id: suggestionId })
+        });
+
+        const result = await res.json();
+        alert(result.message);
+        fetchBeingAddressedSuggestions(); // refresh list
+      } catch (error) {
+        alert("Failed to mark as resolved.");
+        console.error(error);
+      }
+    }
+    function refreshDashboard() {
+      fetchPendingSuggestions();
+      fetchBeingAddressedSuggestions();
+    }
+  </script>
+</body>
+</html>

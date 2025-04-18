@@ -1,0 +1,69 @@
+<!-- signup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suggestion System - Sign Up</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        async function register() {
+            const student_id = document.getElementById('reg_student_id').value;
+            const email = document.getElementById('reg_email').value;
+            const password = document.getElementById('reg_password').value;
+            const confirmPassword = document.getElementById('reg_confirm_password').value;
+            const course = document.getElementById('reg_course').value;
+
+            if (!student_id || !email || !password || !confirmPassword || !course) {
+                alert("All fields are required. Please fill them out.");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match. Please try again.");
+                return;
+            }
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id, email, password, course })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</head>
+<body>
+    <section>
+        <div class="login-box">
+            <h2>Student Registration</h2>
+            <div class="input-box">
+                <input id="reg_student_id" type="text" required>
+                <label for="reg_student_id">Student ID</label>
+            </div>
+            <div class="input-box">
+                <input id="reg_email" type="text" required>
+                <label for="reg_email">Email</label>
+            </div>
+            <div class="input-box">
+                <input id="reg_password" type="password" required>
+                <label for="reg_password">Password</label>
+            </div>
+            <div class="input-box">
+                <input id="reg_confirm_password" type="password" required>
+                <label for="reg_confirm_password">Confirm Password</label>
+            </div>
+            <div class="input-box">
+                <input id="reg_course" type="text" required>
+                <label for="reg_course">Course</label>
+            </div>
+            <button onclick="register()">Register</button>
+            <div class="register-link">
+                <p>Already have an account? <a href="index.html">Login</a></p>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

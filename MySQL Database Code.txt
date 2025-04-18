@@ -1,0 +1,46 @@
+CREATE DATABASE IF NOT EXISTS sfeedback_systemvC;
+USE sfeedback_systemvC;
+
+-- STUDENTS table
+CREATE TABLE IF NOT EXISTS STUDENTS (
+    Student_ID VARCHAR(20) PRIMARY KEY,
+    Email VARCHAR(255) NOT NULL UNIQUE,
+    Password VARCHAR(255) NOT NULL,
+    Course VARCHAR(100) NOT NULL
+);
+
+-- CATEGORY table
+CREATE TABLE IF NOT EXISTS CATEGORY (
+    Category_id INT AUTO_INCREMENT PRIMARY KEY,
+    Category_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- Insert categories if they do not already exist
+INSERT IGNORE INTO CATEGORY (Category_name) VALUES
+('Facility'),
+('Student'),
+('Professor'),
+('Other');
+
+-- SUGGESTION table with updated Status ENUM
+CREATE TABLE IF NOT EXISTS SUGGESTION (
+    Suggestion_id INT AUTO_INCREMENT PRIMARY KEY,
+    Student_id VARCHAR(20),
+    Category_id INT,
+    Subcategory TEXT,
+    Message TEXT NOT NULL,
+    Status ENUM('No Action Yet', 'Being Addressed', 'Resolved') DEFAULT 'No Action Yet',
+    Date_submitted DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Student_id) REFERENCES STUDENTS(Student_ID),
+    FOREIGN KEY (Category_id) REFERENCES CATEGORY(Category_id)
+);
+
+-- FEEDBACK table with updated Status ENUM
+CREATE TABLE IF NOT EXISTS FEEDBACK (
+    Feedback_id INT AUTO_INCREMENT PRIMARY KEY,
+    Suggestion_id INT NOT NULL,
+    Status ENUM('No Action Yet', 'Being Addressed', 'Resolved') NOT NULL,
+    Response TEXT,
+    Date_evaluated DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Suggestion_id) REFERENCES SUGGESTION(Suggestion_id)
+);

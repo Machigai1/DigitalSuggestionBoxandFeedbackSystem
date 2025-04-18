@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suggestion System - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        async function login() {
+            const email = document.getElementById('login_email').value;
+            const password = document.getElementById('login_password').value;
+
+            // Check if it's the default admin account
+            if (email === 'admin' && password === 'admin') {
+                window.location.href = 'admin_dashboard.html';
+                return;
+            }
+
+            // Regular student login process
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('student_id', result.student_id);
+                window.location.href = 'dashboard.html';
+            } else {
+                alert(result.message);
+            }
+        }
+    </script>
+</head>
+<body>
+    <section>
+        <h1 class="header-title">CEA Feedback and Suggestion BOX</h1>
+        <div class="container">
+            <div class="login-box">
+                <h2>Login</h2>
+                <div class="input-box">
+                    <input id="login_email" type="text" required>
+                    <label>Email</label>
+                </div>
+                <div class="input-box">
+                    <input id="login_password" type="password" required>
+                    <label>Password</label>
+                </div>
+                <button onclick="login()">Login</button>
+                <div class="register-link">
+                    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+                </div>
+            </div>
+            <div class="disclaimer">
+                <p><strong>Disclaimer:</strong> This website is designed for students suggestions regarding the College of Engineering and Architecture. All submissions are reviewed for constructive feedback and improvement.</p>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
+

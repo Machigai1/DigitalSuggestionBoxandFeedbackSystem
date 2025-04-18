@@ -1,0 +1,59 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Suggestion System - Student Feedback</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+        <script>
+            document.addEventListener('DOMContentLoaded', fetchFeedback);
+
+            async function fetchFeedback() {
+                const studentId = localStorage.getItem('student_id');
+                if (!studentId) {
+                    alert("You need to be logged in to view your feedback.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/get_student_feedback/${studentId}`);
+                    const feedbacks = await response.json();
+                    const feedbackList = document.getElementById('feedbackList');
+                    feedbackList.innerHTML = '';
+
+                    feedbacks.forEach(feedback => {
+                        const feedbackDiv = document.createElement('div');
+                        feedbackDiv.className = "p-4 mb-4 bg-white border rounded";
+                        feedbackDiv.innerHTML = `
+                            <p><strong>Suggestion ID:</strong> ${feedback.Suggestion_id}</p>
+                            <p><strong>Category:</strong> ${feedback.Category_name}</p>
+                            <p><strong>Message:</strong> ${feedback.Message}</p>
+                            <p><strong>Status:</strong> ${feedback.Status}</p>
+                            <p><strong>Admin Response:</strong> ${feedback.Response || "No response yet."}</p>
+                            <p><strong>Date Evaluated:</strong> ${feedback.Date_evaluated || "Not evaluated yet."}</p>
+                        `;
+                        feedbackList.appendChild(feedbackDiv);
+                    });
+                } catch (error) {
+                    console.error('Error fetching feedback:', error);
+                    alert('There was an error loading your feedback. Please try again later.');
+                }
+            }
+
+            // Back function to go back to the previous page or a specific URL
+            function goBack() {
+                window.history.back();  // Navigates back to the previous page
+            }
+        </script>
+    </head>
+    <body class="bg-gray-100 text-gray-800">
+        <div class="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+            <h2 class="text-2xl font-bold mb-4">Student Feedback Interface</h2>
+            
+            <!-- Back button -->
+            <button class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700" onclick="goBack()">Back</button>
+
+            <div id="feedbackList"></div>
+        </div>
+    </body>
+    </html>

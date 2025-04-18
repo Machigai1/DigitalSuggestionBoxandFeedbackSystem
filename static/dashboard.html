@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"/>
+  <link rel="stylesheet" href="style1.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <div class="sidebar">
+    <h2>DSFS</h2>
+    <ul>
+      <li><a href="suggestion.html" title="Submit Suggestion"><i class="fa-solid fa-plus"></i></a></li>
+      <li><a href="index.html" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <h1>Student Dashboard</h1>
+    </div>
+
+    <div class="max-w-5xl mx-auto mt-6 p-6">
+      <h2 class="text-xl font-bold mb-4">Your Submitted Suggestions & Feedback</h2>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <div>
+          <label class="block font-semibold">Filter by Date:</label>
+          <select id="dateFilter" class="p-2 border rounded">
+            <option value="all">All</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="thisWeek">This Week</option>
+            <option value="lastWeek">Last Week</option>
+            <option value="lastMonth">Last Month</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold">Filter by Status:</label>
+          <select id="statusFilter" class="p-2 border rounded">
+            <option value="all">All</option>
+            <option value="No Action Yet">No Action Yet</option>
+            <option value="Being Addressed">Being Addressed</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="feedbackList" class="space-y-6">
+        <p>Loading your suggestions and feedback...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Plus Button for Submitting Suggestion -->
+  <a href="suggestion.html" 
+     title="Submit Suggestion"
+     class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition transform hover:scale-105 z-50">
+    <i class="fa-solid fa-plus text-2xl"></i>
+  </a>
+
+  <script>
+    let allFeedbacks = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchFeedback();
+      setInterval(fetchFeedback, 10000);
+
+      document.getElementById('dateFilter').addEventListener('change', applyFilters);
+      document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    });
+
+    async function fetchFeedback() {
+      const studentId = localStorage.getItem('student_id');
+      if (!studentId) {
+        alert("You need to be logged in to view your feedback.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`/get_student_feedback/${studentId}`);
+        allFeedbacks = await response.json();
+        applyFilters();
+      } catch (error) {
+        console.error('Error fetching feedback:', error);
+        alert('There was an error loading your feedback. Please try again later.');
+      }
+    }
+
+    function applyFilters() {
+      const dateFilter = document.getElementById('dateFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      const now = new Date();
+      const todayStart = new Date(now.setHours(0, 0, 0, 0));
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(todayStart.getDate() - 1);
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      const lastWeekStart = new Date(weekStart);
+      lastWeekStart.setDate(weekStart.getDate() - 7);
+      const lastWeekEnd = new Date(weekStart);
+      lastWeekEnd.setDate(weekStart.getDate() - 1);
+      const lastMonth = new Date(now);
+      lastMonth.setMonth(now.getMonth() - 1);
+
+      const filtered = allFeedbacks.filter(fb => {
+        const dateEval = new Date(fb.Date_evaluated || fb.Date_submitted);
+        let datePass = true, statusPass = true;
+
+        if (dateFilter === "today") {
+          datePass = dateEval >= todayStart;
+        } else if (dateFilter === "yesterday") {
+          datePass = dateEval >= yesterdayStart && dateEval < todayStart;
+        } else if (dateFilter === "thisWeek") {
+          datePass = dateEval >= weekStart;
+        } else if (dateFilter === "lastWeek") {
+          datePass = dateEval >= lastWeekStart && dateEval <= lastWeekEnd;
+        } else if (dateFilter === "lastMonth") {
+          datePass = dateEval.getMonth() === lastMonth.getMonth() && dateEval.getFullYear() === lastMonth.getFullYear();
+        }
+
+        if (statusFilter !== "all") {
+          statusPass = fb.Status === statusFilter;
+        }
+
+        return datePass && statusPass;
+      });
+
+      renderFeedback(filtered);
+    }
+
+    function renderFeedback(data) {
+      const feedbackList = document.getElementById('feedbackList');
+      feedbackList.innerHTML = '';
+
+      if (data.length === 0) {
+        feedbackList.innerHTML = '<p>No matching suggestions found.</p>';
+        return;
+      }
+
+      data.forEach(fb => {
+        const div = document.createElement('div');
+        div.className = "p-4 bg-white border rounded shadow";
+        div.innerHTML = `
+          <p><strong>Suggestion ID:</strong> ${fb.Suggestion_id}</p>
+          <p><strong>Category:</strong> ${fb.Category_name}</p>
+          <p><strong>Message:</strong> ${fb.Message}</p>
+          <p><strong>Status:</strong> ${fb.Status}</p>
+          <p><strong>Admin Response:</strong> ${fb.Response || "No response yet."}</p>
+          <p><strong>Date Evaluated:</strong> ${fb.Date_evaluated || "Not evaluated yet."}</p>
+        `;
+        feedbackList.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
